@@ -1,9 +1,10 @@
 use bencode_encoder::Decoder;
 use serde_json::{Result, Value};
 use std::{
-    collections::HashMap,
+    hash::Hasher,
+    collections::{HashMap, hash_map::DefaultHasher},
     fs::create_dir,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, time::SystemTime,
 };
 
 fn main() {
@@ -21,7 +22,7 @@ struct TorrentFile {
     //peer_id: String,
     announce_list: Vec<String>,
     file_names: Vec<HashMap<String, String>>,
-    //number_of_pieces: i32,
+    number_of_pieces: f64,
 }
 
 impl TorrentFile {
@@ -34,6 +35,7 @@ impl TorrentFile {
         let pieces = decoded_torrent["info"]["pieces"].to_string();
         let (file_names, total_length) = Self::init_files(&decoded_torrent);
         let announce_list: Vec<String> = Self::get_trackers(&decoded_torrent);
+        let number_of_pieces: f64 = (total_length as f64 / piece_length as f64).ceil();
 
         Ok(TorrentFile {
             torrent_filepath,
@@ -45,7 +47,7 @@ impl TorrentFile {
             //peer_id,
             announce_list,
             file_names,
-            //number_of_pieces
+            number_of_pieces
         })
     }
 
@@ -77,7 +79,6 @@ impl TorrentFile {
                         path_list.first().unwrap().as_str().unwrap().to_string(),
                     );
                     file_list.insert("length".to_owned(), file["length"].to_string().to_owned());
-
                 } else {
                     let i = path_list.len();
 
@@ -86,9 +87,9 @@ impl TorrentFile {
                     }
                     let mut path_complete = path_buf.clone();
                     path_complete.push(path_list.get(i - 1).unwrap().as_str().unwrap());
-                    
+
                     let path_c = path_complete.to_str().unwrap();
-                    
+
                     file_list.insert("path".to_owned(), path_c.to_string());
                     file_list.insert("length".to_owned(), file["length"].to_string().to_owned());
                 }
@@ -99,7 +100,6 @@ impl TorrentFile {
                 total_length += file["length"].as_i64().unwrap();
             }
             (file_names, total_length)
-
         } else {
             file_l.insert("path".to_owned(), root.to_owned());
             file_l.insert(
@@ -114,9 +114,42 @@ impl TorrentFile {
     }
 
     fn get_trackers(decoded_torrent: &Value) -> Vec<String> {
-        
-        todo!("finish")
+        let mut announce_list: Vec<String> = Vec::new();
+        if decoded_torrent["announce-list"].is_array() {
+            let announce_array = decoded_torrent["announce-list"].as_array().unwrap();
+            for trackers in announce_array {
+                announce_list.push(
+                    trackers
+                        .as_array()
+                        .unwrap()
+                        .first()
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_string(),
+                );
+            }
+            announce_list
+        } else {
+            announce_list.push(
+                decoded_torrent
+                    .as_array()
+                    .unwrap()
+                    .first()
+                    .unwrap()
+                    .as_array()
+                    .unwrap()
+                    .first()
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .to_string(),
+            );
+            announce_list
+        }
     }
 
+    fn generate_peer_id() {
+        todo!("finish")
+    }
 }
-
