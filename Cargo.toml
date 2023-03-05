@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 bencode-encoder = "0.1.0"
 serde_json = "1.0.93"
+sha1 = "0.10.5"
+hex = "0.4.3"
