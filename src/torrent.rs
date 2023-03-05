@@ -24,7 +24,7 @@ pub struct TorrentFile {
 impl TorrentFile {
     pub fn new(file_path: String) -> Result<TorrentFile> {
         let decoded_torrent = Self::load_from_path(&file_path);
-        let torrent_filepath = file_path.clone();
+        let torrent_filepath = file_path;
         let piece_length = decoded_torrent["info"]["piece length"]
             .as_i64()
             .expect("failed to get piece length from decoded torrent");
@@ -49,8 +49,8 @@ impl TorrentFile {
         })
     }
 
-    fn load_from_path(file_path: &String) -> Value {
-        let decoded = Decoder::decode_from(file_path.clone()).unwrap();
+    fn load_from_path(file_path: &str) -> Value {
+        let decoded = Decoder::decode_from(file_path).unwrap();
         let values: Value = serde_json::from_str(&decoded.to_json().unwrap()).unwrap();
         serde_json::to_writer(&File::create("data.json").unwrap(), &values["info"]).unwrap();
         values
@@ -111,10 +111,10 @@ impl TorrentFile {
             }
             (file_names, total_length)
         } else {
-            file_l.insert("path".to_owned(), root.to_owned());
+            file_l.insert("path".to_owned(), root);
             file_l.insert(
                 "length".to_owned(),
-                decoded_torrent["info"]["length"].to_string().to_owned(),
+                decoded_torrent["info"]["length"].to_string(),
             );
             file_names.push(file_l);
             let total_length = decoded_torrent["info"]["Length"].as_i64().unwrap();
