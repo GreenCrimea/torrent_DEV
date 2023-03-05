@@ -1,4 +1,6 @@
 mod torrent;
+mod tracker;
+use tracker::Tracker;
 use torrent::TorrentFile;
 
 fn main() {
